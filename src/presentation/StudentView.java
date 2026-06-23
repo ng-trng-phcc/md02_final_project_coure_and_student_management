@@ -188,8 +188,8 @@ public class StudentView {
             System.out.print("Chọn: ");
             String choice = scanner.nextLine().trim();
             switch (choice) {
-                case "1" -> showCourseMenu();
-                case "2" -> showStudentManagementMenu();
+                case "1" -> { if (showCourseMenu()) return; }
+                case "2" -> { if (showStudentManagementMenu()) return; }
                 case "3" -> {
                     System.out.println("Đăng xuất thành công!");
                     return;
@@ -199,7 +199,7 @@ public class StudentView {
         }
     }
 
-    private void showCourseMenu() {
+    private boolean showCourseMenu() {
         while (true) {
             System.out.println("\n---------- QUẢN LÝ KHÓA HỌC ----------");
             System.out.println("1. Xem danh sách khóa học");
@@ -208,7 +208,8 @@ public class StudentView {
             System.out.println("4. Xóa");
             System.out.println("5. Tìm kiếm");
             System.out.println("6. Sắp xếp");
-            System.out.println("7. Đăng xuất");
+            System.out.println("7. Quay lại");
+            System.out.println("8. Đăng xuất");
             System.out.print("Chọn: ");
             String choice = scanner.nextLine().trim();
             switch (choice) {
@@ -218,9 +219,10 @@ public class StudentView {
                 case "4" -> deleteCourse();
                 case "5" -> searchCourses();
                 case "6" -> sortCourses();
-                case "7" -> {
+                case "7" -> { return false; }
+                case "8" -> {
                     System.out.println("Đăng xuất thành công!");
-                    return;
+                    return true;
                 }
                 default -> System.out.println("Lựa chọn không hợp lệ!");
             }
@@ -465,7 +467,7 @@ public class StudentView {
         }
     }
 
-    private void showStudentManagementMenu() {
+    private boolean showStudentManagementMenu() {
         while (true) {
             System.out.println("\n---------- QUẢN LÝ HỌC VIÊN ----------");
             System.out.println("1. Hiển thị danh sách học viên");
@@ -474,7 +476,8 @@ public class StudentView {
             System.out.println("4. Xóa học viên");
             System.out.println("5. Tìm kiếm học viên");
             System.out.println("6. Sắp xếp học viên");
-            System.out.println("7. Đăng xuất");
+            System.out.println("7. Quay lại");
+            System.out.println("8. Đăng xuất");
             System.out.print("Chọn: ");
             String choice = scanner.nextLine().trim();
             switch (choice) {
@@ -484,9 +487,10 @@ public class StudentView {
                 case "4" -> deleteStudent();
                 case "5" -> searchStudents();
                 case "6" -> sortStudents();
-                case "7" -> {
+                case "7" -> { return false; }
+                case "8" -> {
                     System.out.println("Đăng xuất thành công!");
-                    return;
+                    return true;
                 }
                 default -> System.out.println("Lựa chọn không hợp lệ!");
             }
