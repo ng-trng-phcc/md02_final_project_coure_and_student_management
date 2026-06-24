@@ -12,6 +12,7 @@ public class Student {
     private Role role;
     private String password;
     private LocalDate createdAt;
+    private boolean deleted;
 
     // Tạo enum cho role
     public enum Role {
@@ -96,6 +97,13 @@ public class Student {
     }
     public void setCreatedAt(LocalDate createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 
     // Ở phần hiển thị, nếu field nào null thì hiện ""

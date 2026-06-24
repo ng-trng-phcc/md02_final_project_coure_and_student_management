@@ -28,7 +28,12 @@ public class EnrollmentServiceImpl implements IEnrollmentService {
 
         Optional<Enrollment> existing = enrollmentDAO.findByStudentIdAndCourseId(studentId, courseId);
         if (existing.isPresent()) {
-            throw new IllegalArgumentException("Bạn đã đăng ký khóa học này rồi!");
+            String status = existing.get().getStatus();
+            if ("WAITING".equals(status) || "CONFIRM".equals(status)) {
+                throw new IllegalArgumentException("Bạn đã đăng ký khóa học này rồi!");
+            }
+            enrollmentDAO.updateStatus(studentId, courseId, "WAITING");
+            return;
         }
 
         Enrollment enrollment = new Enrollment();
@@ -70,6 +75,29 @@ public class EnrollmentServiceImpl implements IEnrollmentService {
             throw new IllegalArgumentException("Không thể hủy khóa học đã được xác nhận");
         }
 
-        enrollmentDAO.delete(studentId, courseId);
+        enrollmentDAO.updateStatus(studentId, courseId, "CANCEL");
+    }
+
+    @Override
+    public List<Course> getRegisteredCoursesByStatus(int studentId, String status) throws SQLException {
+        return enrollmentDAO.findCoursesByStudentIdAndStatus(studentId, status);
+    }
+
+    @Override
+    public void updateEnrollmentStatus(int studentId, int courseId, String status) throws SQLException {
+        Optional<Enrollment> enrollmentOpt = enrollmentDAO.findByStudentIdAndCourseId(studentId, courseId);
+        if (enrollmentOpt.isEmpty()) {
+            throw new IllegalArgumentException("Không tìm thấy đăng ký");
+        }
+        enrollmentDAO.updateStatus(studentId, courseId, status);
+    }
+
+    @Override
+    public List<Enrollment> getEnrollmentsByCourse(int courseId) throws SQLException {
+        Optional<Course> courseOpt = courseDAO.findById(courseId);
+        if (courseOpt.isEmpty()) {
+            throw new IllegalArgumentException("Khóa học không tồn tại");
+        }
+        return enrollmentDAO.findByCourseId(courseId);
     }
 }

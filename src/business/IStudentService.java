@@ -16,4 +16,7 @@ public interface IStudentService {
     List<Student> search(String keyword) throws SQLException;
     List<Student> sort(String field, boolean ascending) throws SQLException;
     void changePassword(int studentId, String emailOrPhone, String oldPassword, String newPassword) throws SQLException;
+    boolean verifyEmailOrPhone(int studentId, String emailOrPhone) throws SQLException;
+    List<Student> findDeletedStudents() throws SQLException;
+    void restoreStudent(int id) throws SQLException;
 }

@@ -78,7 +78,10 @@ public class StudentServiceImpl implements IStudentService {
         if (existing.isEmpty()) {
             throw new IllegalArgumentException("ID học viên không tồn tại, vui lòng kiểm tra lại");
         }
-        studentDAO.delete(id);
+        if (existing.get().getRole() == Student.Role.ADMIN) {
+            throw new IllegalArgumentException("Không thể xóa tài khoản admin");
+        }
+        studentDAO.softDelete(id);
     }
 
     @Override
@@ -141,5 +144,28 @@ public class StudentServiceImpl implements IStudentService {
 
         student.setPassword(newPassword);
         studentDAO.update(student);
+    }
+
+    @Override
+    public boolean verifyEmailOrPhone(int studentId, String emailOrPhone) throws SQLException {
+        Optional<Student> studentOpt = studentDAO.findById(studentId);
+        if (studentOpt.isEmpty()) return false;
+        Student student = studentOpt.get();
+        return student.getEmail().equals(emailOrPhone.trim())
+                || (student.getPhone() != null && student.getPhone().equals(emailOrPhone.trim()));
+    }
+
+    @Override
+    public List<Student> findDeletedStudents() throws SQLException {
+        return studentDAO.findDeleted();
+    }
+
+    @Override
+    public void restoreStudent(int id) throws SQLException {
+        boolean isDeleted = studentDAO.findDeleted().stream().anyMatch(s -> s.getId() == id);
+        if (!isDeleted) {
+            throw new IllegalArgumentException("ID học viên không tồn tại hoặc chưa bị xóa");
+        }
+        studentDAO.restore(id);
     }
 }

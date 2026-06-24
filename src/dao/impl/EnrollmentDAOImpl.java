@@ -66,7 +66,7 @@ public class EnrollmentDAOImpl implements IEnrollmentDAO {
     @Override
     public List<Course> findRegisteredCoursesByStudentId(int studentId) throws SQLException {
         String sql = """
-                SELECT c.id, c.name, c.duration, c.instructor, c.created_at, e.registered_at, e.status
+                SELECT c.id, c.name, c.duration, c.instructor, c.created_at
                 FROM enrollments e
                 JOIN courses c ON c.id = e.course_id
                 WHERE e.student_id = ?
@@ -89,5 +89,68 @@ public class EnrollmentDAOImpl implements IEnrollmentDAO {
             }
         }
         return courses;
+    }
+
+    @Override
+    public List<Course> findCoursesByStudentIdAndStatus(int studentId, String status) throws SQLException {
+        String sql = """
+                SELECT c.id, c.name, c.duration, c.instructor, c.created_at
+                FROM enrollments e
+                JOIN courses c ON c.id = e.course_id
+                WHERE e.student_id = ? AND e.status = CAST(? AS enr_status)
+                ORDER BY e.registered_at
+                """;
+        List<Course> courses = new ArrayList<>();
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, studentId);
+            stmt.setString(2, status);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Course c = new Course();
+                    c.setId(rs.getInt("id"));
+                    c.setName(rs.getString("name"));
+                    c.setDuration(rs.getInt("duration"));
+                    c.setInstructor(rs.getString("instructor"));
+                    c.setCreatedAt(rs.getDate("created_at").toLocalDate());
+                    courses.add(c);
+                }
+            }
+        }
+        return courses;
+    }
+
+    @Override
+    public void updateStatus(int studentId, int courseId, String status) throws SQLException {
+        String sql = "UPDATE enrollments SET status = CAST(? AS enr_status) WHERE student_id = ? AND course_id = ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, status);
+            stmt.setInt(2, studentId);
+            stmt.setInt(3, courseId);
+            stmt.executeUpdate();
+        }
+    }
+
+    @Override
+    public List<Enrollment> findByCourseId(int courseId) throws SQLException {
+        String sql = "SELECT id, student_id, course_id, registered_at, status FROM enrollments WHERE course_id = ? ORDER BY registered_at";
+        List<Enrollment> enrollments = new ArrayList<>();
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, courseId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Enrollment e = new Enrollment();
+                    e.setId(rs.getInt("id"));
+                    e.setStudentId(rs.getInt("student_id"));
+                    e.setCourseId(rs.getInt("course_id"));
+                    e.setRegisteredAt(rs.getTimestamp("registered_at").toLocalDateTime());
+                    e.setStatus(rs.getString("status"));
+                    enrollments.add(e);
+                }
+            }
+        }
+        return enrollments;
     }
 }

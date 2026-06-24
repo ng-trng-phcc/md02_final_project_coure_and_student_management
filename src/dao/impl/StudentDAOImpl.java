@@ -12,7 +12,7 @@ import java.util.Optional;
 public class StudentDAOImpl implements IStudentDAO {
     @Override
     public List<Student> findAll() throws SQLException {
-        String sql = "SELECT id, name, dob, email, sex, phone, role, password, created_at FROM students ORDER BY id";
+        String sql = "SELECT id, name, dob, email, sex, phone, role, password, created_at, deleted FROM students WHERE deleted = false ORDER BY id";
         List<Student> students = new ArrayList<>();
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -26,7 +26,7 @@ public class StudentDAOImpl implements IStudentDAO {
 
     @Override
     public Optional<Student> findById(int id) throws SQLException {
-        String sql = "SELECT id, name, dob, email, sex, phone, role, password, created_at FROM students WHERE id = ?";
+        String sql = "SELECT id, name, dob, email, sex, phone, role, password, created_at, deleted FROM students WHERE id = ? AND deleted = false";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
@@ -41,7 +41,7 @@ public class StudentDAOImpl implements IStudentDAO {
 
     @Override
     public Optional<Student> findByEmail(String email) throws SQLException {
-        String sql = "SELECT id, name, dob, email, sex, phone, role, password, created_at FROM students WHERE email = ?";
+        String sql = "SELECT id, name, dob, email, sex, phone, role, password, created_at, deleted FROM students WHERE email = ? AND deleted = false";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, email);
@@ -56,7 +56,7 @@ public class StudentDAOImpl implements IStudentDAO {
 
     @Override
     public Optional<Student> findByPhone(String phone) throws SQLException {
-        String sql = "SELECT id, name, dob, email, sex, phone, role, password, created_at FROM students WHERE phone = ?";
+        String sql = "SELECT id, name, dob, email, sex, phone, role, password, created_at, deleted FROM students WHERE phone = ? AND deleted = false";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, phone);
@@ -71,7 +71,7 @@ public class StudentDAOImpl implements IStudentDAO {
 
     @Override
     public Optional<Student> findByName(String name) throws SQLException {
-        String sql = "SELECT id, name, dob, email, sex, phone, role, password, created_at FROM students WHERE name = ?";
+        String sql = "SELECT id, name, dob, email, sex, phone, role, password, created_at, deleted FROM students WHERE name = ? AND deleted = false";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, name);
@@ -82,6 +82,50 @@ public class StudentDAOImpl implements IStudentDAO {
             }
         }
         return Optional.empty();
+    }
+
+    @Override
+    public Optional<Student> findByEmailIncludingDeleted(String email) throws SQLException {
+        String sql = "SELECT id, name, dob, email, sex, phone, role, password, created_at, deleted FROM students WHERE email = ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, email);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapRow(rs));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Student> findByNameIncludingDeleted(String name) throws SQLException {
+        String sql = "SELECT id, name, dob, email, sex, phone, role, password, created_at, deleted FROM students WHERE name = ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, name);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapRow(rs));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public List<Student> findDeleted() throws SQLException {
+        String sql = "SELECT id, name, dob, email, sex, phone, role, password, created_at, deleted FROM students WHERE deleted = true ORDER BY id";
+        List<Student> students = new ArrayList<>();
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                students.add(mapRow(rs));
+            }
+        }
+        return students;
     }
 
     @Override
@@ -124,8 +168,18 @@ public class StudentDAOImpl implements IStudentDAO {
     }
 
     @Override
-    public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM students WHERE id = ?";
+    public void softDelete(int id) throws SQLException {
+        String sql = "UPDATE students SET deleted = true WHERE id = ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            stmt.executeUpdate();
+        }
+    }
+
+    @Override
+    public void restore(int id) throws SQLException {
+        String sql = "UPDATE students SET deleted = false WHERE id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
@@ -144,6 +198,11 @@ public class StudentDAOImpl implements IStudentDAO {
         student.setRole(Student.Role.valueOf(rs.getString("role")));
         student.setPassword(rs.getString("password"));
         student.setCreatedAt(rs.getDate("created_at").toLocalDate());
+        try {
+            student.setDeleted(rs.getBoolean("deleted"));
+        } catch (SQLException e) {
+            // column may not exist yet
+        }
         return student;
     }
 }

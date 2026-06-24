@@ -12,4 +12,7 @@ public interface IEnrollmentDAO {
     Enrollment save(Enrollment enrollment) throws SQLException;
     void delete(int studentId, int courseId) throws SQLException;
     List<Course> findRegisteredCoursesByStudentId(int studentId) throws SQLException;
+    List<Course> findCoursesByStudentIdAndStatus(int studentId, String status) throws SQLException;
+    void updateStatus(int studentId, int courseId, String status) throws SQLException;
+    List<Enrollment> findByCourseId(int courseId) throws SQLException;
 }
